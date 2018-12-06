@@ -38,7 +38,7 @@ export interface IVegetaAttackOptions {
   redirects?: number;
   resolvers?: string;
   rootCerts?: string;
-  targets?: any;
+  targets?: string;
   timeout?: string;
   workers?: number;
 }
