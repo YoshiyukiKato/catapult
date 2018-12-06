@@ -1,15 +1,22 @@
-import {VegetaPipeline} from "../../vendor/vegeta/exec";
-import {jobExecClient} from "./job-exec-client";
-import { IJob } from "../../lib/model";
+import {createClient} from "../../vendor/redis/create-client";
+import { Callback } from "redis";
+
+const slavePubClient = createClient();
+const slaveSubClient = createClient();
 
 export class JobExecSlave {
-  public async startWorker() {
-    const job:IJob = JSON.parse(await jobExecClient.startListenExecRequest());
-    const vegeta = new VegetaPipeline();
-    const attackConfig = (({attack,global,targetList}) => ({attack,global,targetList}))(job.vegetaOptions);
-    const encodeConfig = (({encode,global}) => ({encode,global}))(job.vegetaOptions);
-    const reportConfig = (({report,global}) => ({report,global}))(job.vegetaOptions);
-    const {stdout, stderr} = await vegeta.attack(attackConfig).encode(encodeConfig).report(reportConfig).exec();
-    await jobExecClient.responseExec(stdout);
+  public startListenExecRequest(cb:Callback<string>): void {
+    slaveSubClient.on("message", cb);
+    slaveSubClient.subscribe("exec-job-request");
+  }
+
+  public stopListenExecRequest(): void {
+    slaveSubClient.unsubscribe("exec-job-request");
+  }
+
+  public responseExec(result): void {
+    slavePubClient.publish("exec-job-response", JSON.stringify(result));
   }
 }
+
+export const jobExecSlave = new JobExecSlave();

@@ -3,14 +3,14 @@ import assert from "power-assert";
 import {targetServer} from "./fixture/target-server";
 
 import {JobStoreService} from "../src/service/job-store-service/job-store-service";
-import {JobExecMaster} from "../src/service/job-exec-service/job-exec-master";
-import {JobExecSlave} from "../src/service/job-exec-service/job-exec-slave";
+import {JobExecMasterService} from "../src/service/job-exec-service/job-exec-master-service";
+import {JobExecSlaveService} from "../src/service/job-exec-service/job-exec-slave-service";
 
 const TARGET_SERVER_PORT = 3000;
 
 const store = new JobStoreService();
-const master = new JobExecMaster();
-const slave = new JobExecSlave();
+const master = new JobExecMasterService();
+const slave = new JobExecSlaveService();
 
 describe("catapult", () => {
   describe("store service", () => {
@@ -20,7 +20,7 @@ describe("catapult", () => {
         vegetaOptions:{
           attack: {
             format: "json",
-            duration: "5s",
+            duration: "1s",
             rate: "100",
           },
           report: {
@@ -45,13 +45,18 @@ describe("catapult", () => {
       slave.startWorker();
       master.startWorker();
     });
+    
+    after(() => {
+      master.stopWorker();
+      slave.stopWorker();
+    });
   });
   
   before(() => {
     targetServer.listen(TARGET_SERVER_PORT);
   });
   
-  after((done) => {
+  after(() => {
     targetServer.close();
   });
 });

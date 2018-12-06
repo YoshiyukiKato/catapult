@@ -1,4 +1,4 @@
-import {redisAsyncClient} from "../../vendor/redis-async-client";
+import {redisAsyncClient} from "../../vendor/redis/async-client";
 
 export class StoreClient<Store> {
   private namespace: string;

@@ -1,9 +1,6 @@
-import redis from "redis"
+import {createClient} from "./create-client";
 
-const client = redis.createClient({
-  host: process.env.REDIS_HOST || "localhost",
-  port: Number(process.env.REDIS_PORT || "6379")
-});
+const client = createClient();
 
 class RedisAsyncClient {
   public async hgetall(key: string): Promise<{[key: string]: string}> {

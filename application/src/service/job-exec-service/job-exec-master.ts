@@ -1,48 +1,22 @@
-import {IJob, Status} from "../../lib/model";
-import {jobExecClient} from "./job-exec-client";
-import {JobStoreService} from "../job-store-service/job-store-service";
+import {createClient} from "../../vendor/redis/create-client";
+import { Callback } from "redis";
 
-const jobStoreService = new JobStoreService();
+const masterPubClient = createClient();
+const masterSubClient = createClient();
 
 export class JobExecMaster {
-  private async findJobRunnable(): Promise<any> {
-    const jobs = await jobStoreService.findJobs();
-    const runningJobs = jobs.filter((job) => job.status === Status.Running || job.status === Status.Runnable);
-    const runnableJobs = jobs.filter((job) => { 
-      return job.status === Status.Registerd 
-        && runningJobs.reduce((acc, runningJob) => { 
-          return acc && job.targetEndpoint !== runningJob.targetEndpoint;
-        }, true);
-    });
-    const runnableJob = runnableJobs.sort((jobA, jobB) => jobA.createdAt > jobB.createdAt ? 1 : -1)[0];
-    if(runnableJob){
-      await jobStoreService.updateJob(runnableJob.id, { status: Status.Runnable, updatedAt: Date.now() });
-    }
-    return runnableJob;
-  }
-
-  private async requestExec(job) {
-    await jobExecClient.requestExec(job);
-    await jobStoreService.updateJob(job.id, { status: Status.Running, updatedAt: Date.now() });
+  public requestExec(job): void {
+    masterPubClient.publish("exec-job-request", JSON.stringify(job));
   }
   
-  private watchJobRunnable() {
-    setInterval(() => {
-      const runnableJob = this.findJobRunnable();
-      if(runnableJob){
-        this.requestExec(runnableJob);
-      }
-    }, 1000);
+  public startListenExecResponse(cb:Callback<string>): void {
+    masterSubClient.on("message", cb);
+    masterSubClient.subscribe("exec-job-response");
   }
 
-  private async startListenExecResponse() {
-    const response:any = await jobExecClient.startListenExecResponse();
-    console.log(response);
-    await jobStoreService.updateJob(response.id, { status: Status.Succeed, updatedAt: Date.now() });
-  }
-
-  public async startWorker() {
-    this.watchJobRunnable();
-    await this.startListenExecResponse();
+  public stopListenExecResponse(): void {
+    masterSubClient.unsubscribe("exec-job-response");
   }
 }
+
+export const jobExecMaster = new JobExecMaster();

@@ -28,3 +28,8 @@ export interface IJob extends IJobConfig{
   updatedAt: number;
   status: Status;
 }
+
+export interface IJobResult {
+  id: string;
+  vegetaResult: any;
+}
