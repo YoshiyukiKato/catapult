@@ -1,4 +1,4 @@
-import {redisAsyncClient} from "../redis-async-client";
+import {redisAsyncClient} from "../../vendor/redis-async-client";
 
 export class JobExecClient {
   public async requestExec(job) {
