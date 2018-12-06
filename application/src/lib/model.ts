@@ -9,11 +9,12 @@ export enum Status {
 }
 
 export interface IVegetaOptions {
-  global: IVegetaGlobalOptions;
-  attack: IVegetaAttackOptions;
-  encode: IVegetaEncodeOptions;
-  report: IVegetaReportOptions;
-  plot: IVegetaPlotOptions;
+  global?: IVegetaGlobalOptions;
+  attack?: IVegetaAttackOptions;
+  encode?: IVegetaEncodeOptions;
+  report?: IVegetaReportOptions;
+  plot?: IVegetaPlotOptions;
+  targetList?: IVegetaTarget[];
 }
 
 export interface IJobConfig {
